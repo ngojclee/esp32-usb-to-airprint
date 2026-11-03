@@ -22,7 +22,7 @@
 
 static const char *TAG = "usb_printer";
 
-#define OUT_XFER_SIZE 16384     // two of these: one filling while one is sent
+#define OUT_XFER_SIZE 4096      // one DMA descriptor: avoids the DWC2 multi-descriptor bug
 #define OUT_XFER_COUNT 2
 #define IN_XFER_SIZE 512        // multiple of the 64-byte full-speed MPS
 #define CTRL_XFER_SIZE (sizeof(usb_setup_packet_t) + 1024)

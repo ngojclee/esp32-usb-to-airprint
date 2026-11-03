@@ -159,6 +159,10 @@ esp_err_t print_job_test_page(bool dry_run, int dpi, print_stats_t *stats)
     printer_io_t io = {.write = test_write, .sync = dry_run ? NULL : test_sync, .progress = test_progress, .ctx = &out};
     err = d->test_page(d, &io, dpi, label) == 0 ? ESP_OK : ESP_FAIL;
     if (!dry_run) {
+        // job_end drops a part-filled transfer: send the tail of the job first
+        // (drivers that never call io.sync, like the Dell, lost it)
+        if (err == ESP_OK)
+            err = usb_printer_flush();
         if (err != ESP_OK && usb_printer_connected())
             ESP_LOGW(TAG, "job aborted, resetting printer");
         usb_printer_job_end();

@@ -4,14 +4,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int printer_driver_paper_for(const printer_driver_t *d, int height_px, int dpi)
+int printer_driver_paper_for(const printer_driver_t *d, int width_px, int height_px, int dpi)
 {
-    // 1/100 mm; e.g. a Letter page (279.4 mm) is closer to Letter than to A4 (297 mm)
-    long h = (long)height_px * 2540 / dpi;
+    // 1/100 mm; the paper closest in both width and height, e.g. a Letter
+    // page (215.9 x 279.4 mm) is closer to Letter than to A4 (210 x 297 mm),
+    // and A5 (148 x 210) is not mistaken for Statement (139.7 x 215.9)
+    long w = (long)width_px * 2540 / dpi, h = (long)height_px * 2540 / dpi;
     int best = 0;
-    for (int i = 1; i < d->npapers; i++)
-        if (labs(d->papers[i].height - h) < labs(d->papers[best].height - h))
+    long best_d = -1;
+    for (int i = 0; i < d->npapers; i++) {
+        long dist = labs(d->papers[i].width - w) + labs(d->papers[i].height - h);
+        if (best_d < 0 || dist < best_d) {
             best = i;
+            best_d = dist;
+        }
+    }
     return best;
 }
 

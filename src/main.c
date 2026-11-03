@@ -30,6 +30,7 @@
 #include "oled.h"
 #include "print_job.h"
 #include "scan_service.h"
+#include "settings.h"
 #include "sdkconfig.h"
 #include "status_led.h"
 #include "usb_printer.h"
@@ -38,6 +39,7 @@
 static const char *TAG = "main";
 
 #define LONG_PRESS_MS 2000
+#define FACTORY_RESET_MS 10000
 #define DOUBLE_PRESS_MS 400     // a second press within this is a double press
 #define ERROR_SHOW_MS 3000
 
@@ -95,10 +97,18 @@ static void print_task(void *arg)
     vTaskDelete(NULL);
 }
 
+static void on_double_press(void);
+
 static void on_press(void)
 {
     if (s_busy || s_airprint_busy) {
         ESP_LOGI(TAG, "busy; hold BOOT for 2 s to cancel");
+        return;
+    }
+    // A printer without a scanner (the Dell B1160): the button prints the
+    // test page instead of failing a scan.
+    if (!print_job_driver()->scanner) {
+        on_double_press();
         return;
     }
     const char *why;
@@ -209,6 +219,14 @@ static void button_task(void *arg)
             pending = false;
             on_press();
         }
+        // held 10 s: forget the settings (WiFi, names, /setup password) and
+        // restart in setup mode; the way back in when the password is lost
+        if (down && long_fired && xTaskGetTickCount() - pressed_at >= pdMS_TO_TICKS(FACTORY_RESET_MS)) {
+            ESP_LOGW(TAG, "BOOT held %d s: factory reset", FACTORY_RESET_MS / 1000);
+            settings_erase();
+            vTaskDelay(pdMS_TO_TICKS(200));
+            esp_restart();
+        }
         if (down && !long_fired && !waking && xTaskGetTickCount() - pressed_at >= pdMS_TO_TICKS(LONG_PRESS_MS)) {
             long_fired = true;
             if (s_busy || s_airprint_busy) {
@@ -261,15 +279,18 @@ void app_main(void)
         debug_log_start(64 * 1024);
     ESP_ERROR_CHECK(status_led_init());
     status_led_set(LED_WAITING);
-    oled_start(HOSTNAME);
+    ESP_ERROR_CHECK(settings_init());
+    const settings_t *cfg = settings_get();
+    oled_start(cfg->hostname);
     ESP_ERROR_CHECK(usb_printer_start(on_printer));
     xTaskCreate(button_task, "button", 3072, NULL, 5, NULL);
     ESP_LOGI(TAG, "ready: press BOOT (or GPIO%d) to scan, twice for a test page", CONFIG_PRINT_BUTTON2_GPIO);
 
     xTaskCreate(ota_confirm_task, "ota_confirm", 3072, NULL, 2, NULL);
-    // AirPrint; the printer keeps working locally if WiFi isn't configured
-    if (wifi_start(HOSTNAME) == ESP_OK) {
-        if (airprint_esp_start(HOSTNAME, on_airprint_job) != ESP_OK)
+    // AirPrint and /setup; with no WiFi configured this is the setup WiFi
+    // (captive portal), and the printer still works locally from the button
+    if (wifi_start(cfg) == ESP_OK) {
+        if (airprint_esp_start(cfg->hostname, on_airprint_job) != ESP_OK)
             ESP_LOGE(TAG, "AirPrint failed to start");
         if (debug)
             s_debug_server_up = debug_server_start(device_busy) == ESP_OK;

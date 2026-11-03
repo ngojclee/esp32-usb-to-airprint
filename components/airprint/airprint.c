@@ -51,7 +51,7 @@
 #define MAX_JOBS 10
 #define MULTIPLE_OP_TIMEOUT_S 60
 
-#define MAX_PAPERS 8         // of a driver, in the IPP attributes
+#define MAX_PAPERS 24        // of a driver, in the IPP attributes
 
 enum {
     JOB_PENDING = 3,
@@ -96,6 +96,7 @@ struct airprint_http {
     char path[128];
     char host[96];
     char if_none_match[48];
+    char cookie[96];            // the Cookie header, cut to fit
     bool keep_alive;
     bool http10;                // HTTP/1.0 client: no chunked responses
     bool chunked_out;           // streaming response uses chunked encoding
@@ -302,6 +303,11 @@ const char *airprint_http_host(airprint_http_t *c)
 const char *airprint_http_if_none_match(airprint_http_t *c)
 {
     return c->if_none_match;
+}
+
+const char *airprint_http_cookie(airprint_http_t *c)
+{
+    return c->cookie;
 }
 
 int airprint_http_stream_begin(airprint_http_t *c, const char *type, const char *extra_headers)
@@ -929,7 +935,7 @@ static int pipe_page_begin(void *user, const raster_page_t *pg)
         return 2;
     }
     if (!p->drv_job) {
-        int paper = printer_driver_paper_for(d, pg->height, pg->dpi);
+        int paper = printer_driver_paper_for(d, pg->width, pg->height, pg->dpi);
         p->io = (printer_io_t){.write = pipe_write, .sync = pipe_sync, .ctx = p};
         p->dpi = pg->dpi;
         LOGI("job %d: %s %d dpi, %s", p->job->id, d->papers[paper].name, pg->dpi, pg->bytes_pp == 3 ? "color" : "gray");
@@ -1520,6 +1526,7 @@ static void *conn_thread(void *arg)
         c->in_chunks = false;
         c->host[0] = 0;
         c->if_none_match[0] = 0;
+        c->cookie[0] = 0;
         bool expect_continue = false, has_length = false;
         int hl;
         while ((hl = read_line(c, line, sizeof(line))) > 0) {
@@ -1545,6 +1552,8 @@ static void *conn_thread(void *arg)
                 snprintf(c->host, sizeof(c->host), "%s", v);
             } else if (!strcasecmp(line, "If-None-Match")) {
                 snprintf(c->if_none_match, sizeof(c->if_none_match), "%s", v);
+            } else if (!strcasecmp(line, "Cookie")) {
+                snprintf(c->cookie, sizeof(c->cookie), "%s", v);
             }
         }
         if (hl < 0)
@@ -1554,7 +1563,10 @@ static void *conn_thread(void *arg)
         if (expect_continue && !c->body_eof)
             send_all(c->fd, "HTTP/1.1 100 Continue\r\n\r\n", 25);
 
-        bool ipp_path = !strcmp(c->path, "/") || !strncmp(c->path, "/ipp", 4);
+        // "/printers/<queue>" too: clients set up against a CUPS server keep
+        // their printer URI when this board takes the server's place
+        bool ipp_path = !strcmp(c->path, "/") || !strncmp(c->path, "/ipp", 4) ||
+                        !strncmp(c->path, "/printers/", 10);
         if (!strcmp(c->method, "POST") && (ipp_path || !s_cfg->http_handler)) {
             handle_ipp(c);
         } else if (!strcmp(c->method, "POST") || !strcmp(c->method, "DELETE")) {
