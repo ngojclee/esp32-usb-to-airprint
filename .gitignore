@@ -36,3 +36,11 @@ tools/gutenprint_ref/build/
 __pycache__/
 *.pyc
 .DS_Store
+
+# host test output in the project root (MSVC / gcc builds, qpdl_selftest)
+/*.exe
+/*.obj
+/qpdl-*
+/*.prn
+temp_scripts/
+.omc/

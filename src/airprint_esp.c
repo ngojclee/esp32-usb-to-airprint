@@ -20,6 +20,8 @@
 #include "print_job.h"
 #include "printer_driver.h"
 #include "scan_service.h"
+#include "settings.h"
+#include "setup_web.h"
 #include "shared_buf.h"
 #include "status_led.h"
 #include "usb_printer.h"
@@ -120,6 +122,10 @@ static int job_sync(void *ctx, const char *what)
 static void job_close(void *ctx, bool ok)
 {
     esp_timer_stop(s_cancel_timer);
+    // job_end drops a part-filled transfer: send the tail of the job first
+    // (drivers that never call io.sync, like the Dell, lost it)
+    if (ok && usb_printer_flush() != ESP_OK)
+        ok = false;
     usb_printer_job_end();
     s_job_running = false;
     if (!ok && usb_printer_connected()) {
@@ -224,9 +230,17 @@ static void dev_job_close(void *ctx, bool ok)
              (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 }
 
+// The name shown to clients: the one set on /setup, else the printer model
+static const char *printer_name(void)
+{
+    const char *n = settings_get()->name;
+    return n[0] ? n : print_job_driver()->make_model;
+}
+
 static bool web_http(airprint_http_t *h, const char *method, const char *path)
 {
-    return scan_service_http(h, method, path) || events_http(h, method, path) || webui_http(h, method, path);
+    return setup_web_http(h, method, path) || scan_service_http(h, method, path) || events_http(h, method, path) ||
+           webui_http(h, method, path);
 }
 
 static bool dev_http(void *ctx, airprint_http_t *h, const char *method, const char *path)
@@ -361,15 +375,15 @@ static esp_err_t announce(const char *hostname)
         {"Scan", drv->scanner ? "T" : "F"},    // the eSCL scanner below, same UUID
         {"Fax", "F"},
     };
-    err = mdns_service_add(PRINTER_NAME, "_ipp", "_tcp", IPP_PORT, txt, sizeof(txt) / sizeof(txt[0]));
+    err = mdns_service_add(printer_name(), "_ipp", "_tcp", IPP_PORT, txt, sizeof(txt) / sizeof(txt[0]));
     if (err != ESP_OK)
         return err;
     // "_universal" is what iOS looks for; "_print" is IPP Everywhere
-    mdns_service_subtype_add_for_host(PRINTER_NAME, "_ipp", "_tcp", NULL, "_universal");
-    mdns_service_subtype_add_for_host(PRINTER_NAME, "_ipp", "_tcp", NULL, "_print");
+    mdns_service_subtype_add_for_host(printer_name(), "_ipp", "_tcp", NULL, "_universal");
+    mdns_service_subtype_add_for_host(printer_name(), "_ipp", "_tcp", NULL, "_print");
 
     if (!drv->scanner) {
-        ESP_LOGI(TAG, "announced \"%s\" as %s.local:%d", PRINTER_NAME, hostname, IPP_PORT);
+        ESP_LOGI(TAG, "announced \"%s\" as %s.local:%d", printer_name(), hostname, IPP_PORT);
         return ESP_OK;
     }
     // eSCL scanner (AirScan): macOS Image Capture / Preview, sane-airscan, Windows
@@ -389,10 +403,10 @@ static esp_err_t announce(const char *hostname)
         {"adminurl", adminurl},
         {"representation", icon},
     };
-    err = mdns_service_add(PRINTER_NAME, "_uscan", "_tcp", WEB_PORT, scan_txt, sizeof(scan_txt) / sizeof(scan_txt[0]));
+    err = mdns_service_add(printer_name(), "_uscan", "_tcp", WEB_PORT, scan_txt, sizeof(scan_txt) / sizeof(scan_txt[0]));
     if (err != ESP_OK)
         ESP_LOGW(TAG, "cannot announce the scanner: %s", esp_err_to_name(err));
-    ESP_LOGI(TAG, "announced \"%s\" as %s.local:%d", PRINTER_NAME, hostname, IPP_PORT);
+    ESP_LOGI(TAG, "announced \"%s\" as %s.local:%d", printer_name(), hostname, IPP_PORT);
     return ESP_OK;
 }
 
@@ -402,7 +416,7 @@ static esp_err_t start_mdns(const char *hostname)
     if (err != ESP_OK)
         return err;
     mdns_hostname_set(hostname);
-    mdns_instance_name_set(PRINTER_NAME);
+    mdns_instance_name_set(printer_name());
     return announce(hostname);
 }
 
@@ -452,7 +466,7 @@ esp_err_t airprint_esp_start(const char *hostname, void (*on_job_state)(bool pri
     ESP_LOGI(TAG, "printer driver: %s (%s)", drv->id, drv->make_model);
     snprintf(s_hostname, sizeof(s_hostname), "%s", hostname);
     s_cfg = (airprint_config_t){
-        .name = PRINTER_NAME,
+        .name = printer_name(),
         .uuid = s_uuid,
         .port = IPP_PORT,
         .web_port = WEB_PORT,

@@ -88,8 +88,8 @@ const printer_driver_t *printer_driver_match(uint16_t vid, uint16_t pid, const c
 // Every driver, NULL-terminated.
 extern const printer_driver_t *const printer_drivers[];
 
-// The paper of a page: the driver's paper closest in height.
-int printer_driver_paper_for(const printer_driver_t *d, int height_px, int dpi);
+// The paper of a page: the driver's paper closest in width and height.
+int printer_driver_paper_for(const printer_driver_t *d, int width_px, int height_px, int dpi);
 // The URF capability string (DNS-SD TXT and IPP), e.g.
 // "V1.4,CP1,W8,SRGB24,RS300-600,MT1,PQ3-4-5".
 void printer_driver_urf(const printer_driver_t *d, char *buf, size_t n);
