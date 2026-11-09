@@ -183,6 +183,9 @@ port status 0x18 (selected, no error)
 
 ## Printer drivers (`printer_driver.h`, `components/printers/`)
 
+The add-a-driver workflow (cases, files to touch, tests, status table) is spelled out in `docs/adding-a-printer.md` for users and `.claude/skills/add-printer-driver/SKILL.md` for coding agents.
+
+
 - A driver is a `printer_driver_t`: id, make and model, IEEE 1284 MFG/MDL, USB VID:PID (0 when unknown), colour, whether the device has a pixma scanner, resolutions (the last is the default), papers (the first is the default), margins in 1/100 mm, `model` (the driver's own data); then the job (`job_begin(driver, io, dpi, paper)`, `page_begin(src_w, src_h, bytes_pp)`, `page_line(y, px)`, `page_end`, `job_end`, optional `job_stats`), an optional `test_page(driver, io, dpi, label)` and an optional `status(state, detail, data, st)` that maps the back channel's last status reply into IPP reasons, message and supplies.
 - The driver writes through a `printer_io_t`: `write`, `sync(what)` (flush, then wait for the printer's reply to `what`; the platform waits 5 s, 180 s for "EndJob" if the printer answered "StartJob" (else 5 s), and carries on without a reply) and `progress` (test page: yield every 64 lines).
 - `airprint.c` takes everything printer-specific from `airprint_config_t.driver`: IPP media, margins, resolutions, colour attributes, the URF string (`printer_driver_urf`, also in the mDNS TXT record), the paper of a job (`printer_driver_paper_for`: the driver's paper closest in height to the first page), the conversion. The host server picks the driver with `PRINTER_DRIVER=<id>`.
