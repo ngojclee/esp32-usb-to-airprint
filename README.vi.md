@@ -39,7 +39,7 @@ Không cần máy tính, không cần server CUPS, không cần cài driver trê
 | Canon PIXMA | MG2550S | 🟢 đã thử (bản gốc) | có |
 | Canon PIXMA | MG2400, MG2500, MG2900, MG3000, E460/E470, E3100, TS3100, MP230, MP250–MP288, MP490–MP499, MX340–MX428, iP2700, iP2800, P200 | 🟡 dự kiến chạy được (bản gốc) | đa số có |
 
-- 🟢 đã kiểm chứng trên máy thật · 🟡 dự kiến chạy được, chưa thử trên máy thật
+- 🟢 đã kiểm chứng trên máy thật · 🟡 dự kiến chạy được, chưa thử trên máy thật — bạn đã thử? Một [issue](https://github.com/ngojclee/esp32-usb-to-airprint/issues) một dòng ("chạy" / "lỗi") sẽ nâng nó lên đã kiểm chứng
 
 Firmware tự nhận máy in khi cắm vào (mã USB, rồi model theo IEEE 1284). Máy laser SPL khác (`MODE:SPL3` trong ID 1284)? Rất có thể chỉ cần thêm mã USB vào [`samsung_qpdl.c`](components/printers/samsung_qpdl.c) — hãy mở issue kèm trang in thử.
 
@@ -71,7 +71,15 @@ Tuỳ chọn: màn hình OLED SSD1315 và thêm nút bấm, xem [phần dưới]
 
 ### 1. Nạp firmware (làm 1 lần)
 
-Cài [PlatformIO](https://platformio.org/install/cli), cắm cổng **COM** của board vào máy tính:
+**Dễ nhất — dùng bản build sẵn.** Tải `esp32-usb-to-airprint-*-esp32s3.bin` từ [Releases](https://github.com/ngojclee/esp32-usb-to-airprint/releases) rồi nạp qua cổng **COM** (một ảnh duy nhất ở offset 0):
+
+```bash
+esptool.py --chip esp32s3 write_flash 0x0 esp32-usb-to-airprint-*-esp32s3.bin
+```
+
+Một ảnh này chứa đủ mọi driver; firmware tự chọn đúng driver khi cắm máy in.
+
+**Hoặc tự build** với [PlatformIO](https://platformio.org/install/cli):
 
 ```bash
 git clone https://github.com/ngojclee/esp32-usb-to-airprint
@@ -210,7 +218,9 @@ Driver SPL có bộ kiểm tra riêng trên máy tính: `host/qpdl_selftest.c` m
 
 ## Thêm máy in
 
-Mỗi model là một driver trong `components/printers/`, khai báo ở `printers.c`; firmware chọn driver theo máy in đang cắm. Một máy Samsung/Dell SPL khác nhiều khả năng chỉ cần sao chép mục `dell_b1160_driver` và đổi mã USB; máy khác nữa thì là một file mới. Mọi driver đều phải thử trên máy in thật.
+Mỗi model là một driver trong `components/printers/`, khai báo ở `printers.c`; firmware chọn driver theo máy in đang cắm (mã USB, rồi model IEEE 1284). Một máy Samsung/Dell SPL khác nhiều khả năng chỉ cần sao chép mục `dell_b1160_driver` và đổi mã USB; máy khác nữa thì là một file mới.
+
+Hướng dẫn từng bước — thêm model, viết driver cho giao thức mới, test khi không có máy in — ở [docs/adding-a-printer.md](docs/adding-a-printer.md) (tiếng Anh). Driver chưa thử được đánh dấu 🟡 cho tới khi có ai báo in được trên máy thật.
 
 ## Ghi công & giấy phép
 

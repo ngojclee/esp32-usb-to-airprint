@@ -39,7 +39,7 @@ Pas d'ordinateur, pas de serveur CUPS, pas de pilote à installer sur le télép
 | Canon PIXMA | MG2550S | 🟢 testé (projet d'origine) | oui |
 | Canon PIXMA | MG2400, MG2500, MG2900, MG3000, E460/E470, E3100, TS3100, MP230, MP250–MP288, MP490–MP499, MX340–MX428, iP2700, iP2800, P200 | 🟡 devrait fonctionner (projet d'origine) | la plupart |
 
-- 🟢 validé sur une vraie imprimante · 🟡 devrait fonctionner, pas encore testé sur matériel réel
+- 🟢 validé sur une vraie imprimante · 🟡 devrait fonctionner, pas encore testé sur matériel réel — vous en avez essayé une ? Un [ticket](https://github.com/ngojclee/esp32-usb-to-airprint/issues) d'une ligne (« marche » / « échoue ») la fait passer en validé
 
 Le firmware reconnaît l'imprimante quand on la branche (identifiants USB, puis modèle IEEE 1284). Une autre laser SPL (`MODE:SPL3` dans son identifiant 1284) ? Il suffit probablement d'ajouter ses identifiants USB dans [`samsung_qpdl.c`](components/printers/samsung_qpdl.c) — ouvrez un ticket avec une page de test.
 
@@ -71,7 +71,15 @@ En option : un écran OLED SSD1315 et des boutons supplémentaires, voir [plus b
 
 ### 1. Flasher le firmware
 
-Avec [PlatformIO](https://platformio.org/install/cli) et le port **COM** de la carte branché à l'ordinateur :
+**Le plus simple — l'image précompilée.** Téléchargez `esp32-usb-to-airprint-*-esp32s3.bin` depuis [Releases](https://github.com/ngojclee/esp32-usb-to-airprint/releases) et flashez-la, port **COM** branché (une seule image à l'offset 0) :
+
+```bash
+esptool.py --chip esp32s3 write_flash 0x0 esp32-usb-to-airprint-*-esp32s3.bin
+```
+
+Cette image unique contient tous les pilotes ; le firmware choisit le bon quand on branche l'imprimante.
+
+**Ou compilez-la vous-même** avec [PlatformIO](https://platformio.org/install/cli) :
 
 ```bash
 git clone https://github.com/ngojclee/esp32-usb-to-airprint
@@ -210,7 +218,9 @@ Le pilote SPL a ses propres vérifications sur ordinateur : `host/qpdl_selftest.
 
 ## Ajouter une imprimante
 
-Chaque modèle est un pilote dans `components/printers/`, déclaré dans `printers.c` ; le firmware choisit celui de l'imprimante branchée. Une autre Samsung/Dell SPL demande probablement de copier l'entrée `dell_b1160_driver` avec ses identifiants USB ; tout autre cas est un nouveau fichier. Chaque pilote doit être testé sur l'imprimante réelle.
+Chaque modèle est un pilote dans `components/printers/`, déclaré dans `printers.c` ; le firmware choisit celui de l'imprimante branchée (identifiants USB, puis modèle IEEE 1284). Une autre Samsung/Dell SPL demande probablement de copier l'entrée `dell_b1160_driver` avec ses identifiants USB ; tout autre cas est un nouveau fichier.
+
+Le guide pas à pas — ajouter un modèle, écrire un pilote pour un nouveau protocole, tester sans avoir l'imprimante — est dans [docs/adding-a-printer.md](docs/adding-a-printer.md) (en anglais). Les pilotes non testés restent marqués 🟡 jusqu'à ce que quelqu'un confirme une impression réelle.
 
 ## Crédits et licence
 

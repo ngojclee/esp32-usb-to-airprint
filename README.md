@@ -41,7 +41,7 @@ No computer, no CUPS server, no drivers on your phone.
 | Canon PIXMA | MG2550S | 🟢 tested (upstream) | yes |
 | Canon PIXMA | MG2400, MG2500, MG2900, MG3000, E460/E470, E3100, TS3100, MP230, MP250–MP288, MP490–MP499, MX340–MX428, iP2700, iP2800, P200 | 🟡 expected to work (upstream) | most |
 
-- 🟢 validated on a real printer · 🟡 expected to work, not tested on real hardware yet
+- 🟢 validated on a real printer · 🟡 expected to work, not tested on real hardware yet — tried one? A one-line [issue](https://github.com/ngojclee/esp32-usb-to-airprint/issues) ("works" / "fails") upgrades it to verified
 
 The firmware recognises the printer when it is plugged in (USB ids, then the IEEE 1284 model). Got another SPL laser (`MODE:SPL3` in its 1284 ID)? It probably needs only its USB ids in [`samsung_qpdl.c`](components/printers/samsung_qpdl.c) — please open an issue with a test print.
 
@@ -73,7 +73,15 @@ Optional: an SSD1315 OLED screen and extra buttons, see [below](#adding-an-oled-
 
 ### 1. Flash the firmware
 
-With [PlatformIO](https://platformio.org/install/cli) and the board's **COM** port connected to your computer:
+**Easiest — the prebuilt image.** Download `esp32-usb-to-airprint-*-esp32s3.bin` from [Releases](https://github.com/ngojclee/esp32-usb-to-airprint/releases) and flash it with the board's **COM** port connected (a single image at offset 0):
+
+```bash
+esptool.py --chip esp32s3 write_flash 0x0 esp32-usb-to-airprint-*-esp32s3.bin
+```
+
+The one image contains every printer driver; the firmware picks the right one when the printer is plugged in.
+
+**Or build it yourself** with [PlatformIO](https://platformio.org/install/cli):
 
 ```bash
 git clone https://github.com/ngojclee/esp32-usb-to-airprint
@@ -203,7 +211,9 @@ Technical details are in [AGENTS.md](AGENTS.md).
 
 ## Adding a printer
 
-Each printer model is a driver in `components/printers/`, listed in `printers.c`; the firmware picks the one of the printer that is plugged in. A Canon PIXMA whose stream is close to the MG2500's is one line in `canon_pixma.c`; another Samsung/Dell SPL laser is likely a copy of the `dell_b1160_driver` entry with its USB ids; anything else is a new file in the same folder. Every driver must be tested on the real printer.
+Each printer model is a driver in `components/printers/`, listed in `printers.c`; the firmware picks the one of the printer that is plugged in (USB ids, then the IEEE 1284 model). A Canon PIXMA whose stream is close to the MG2500's is one line in `canon_pixma.c`; another Samsung/Dell SPL laser is likely a copy of the `dell_b1160_driver` entry with its USB ids; anything else is a new file in the same folder.
+
+The step-by-step guide — adding a model, writing a driver for a new protocol, testing without the printer on your desk — is in [docs/adding-a-printer.md](docs/adding-a-printer.md). Untested drivers ship marked 🟡 until someone reports a real print.
 
 ## Credits & license
 
