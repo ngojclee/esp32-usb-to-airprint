@@ -52,6 +52,8 @@ typedef struct {
     volatile bool connected;
     usb_device_handle_t dev;
     uint8_t intf, alt, ep_out, ep_in;
+    uint8_t proto;              // bInterfaceProtocol of the chosen interface
+    bool ipp_usb;               // a printer-class interface showed protocol 4 (IPP-over-USB)
     bool claimed;
     usb_printer_info_t info;
 
@@ -322,6 +324,8 @@ static void release_device(void)
         usb_host_device_close(s_p.client, s_p.dev);
     s_p.dev = NULL;
     s_p.ep_in = s_p.ep_out = 0;
+    s_p.proto = 0;
+    s_p.ipp_usb = false;
 }
 
 // Ranks printer-class protocols: 2 = bidirectional (preferred), 1 =
@@ -343,12 +347,17 @@ static bool find_printer_interface(const usb_config_desc_t *cfg)
     // commits the interface collected so far if it beats the current best
     #define COMMIT()                                                                        \
         do {                                                                                \
-            if (in_printer && cur_out && proto_rank(cur_proto) > best_rank) {               \
-                best_rank = proto_rank(cur_proto);                                          \
-                s_p.intf = cur_intf;                                                        \
-                s_p.alt = cur_alt;                                                          \
-                s_p.ep_out = cur_out;                                                       \
-                s_p.ep_in = cur_proto == 2 ? cur_in : 0;                                    \
+            if (in_printer && cur_out) {                                                    \
+                if (cur_proto == 4)                                                         \
+                    s_p.ipp_usb = true;                                                     \
+                if (proto_rank(cur_proto) > best_rank) {                                    \
+                    best_rank = proto_rank(cur_proto);                                      \
+                    s_p.intf = cur_intf;                                                    \
+                    s_p.alt = cur_alt;                                                      \
+                    s_p.ep_out = cur_out;                                                   \
+                    s_p.ep_in = cur_proto == 2 ? cur_in : 0;                                \
+                    s_p.proto = cur_proto;                                                  \
+                }                                                                           \
             }                                                                               \
         } while (0)
 
@@ -469,6 +478,8 @@ static void open_device(uint8_t addr)
         return;
     }
     info.bidirectional = s_p.ep_in != 0;
+    info.protocol = s_p.proto;
+    info.ipp_usb = s_p.ipp_usb;
     log_interfaces(cfg);
     ESP_LOGI(TAG, "printer interface %d alt %d, bulk OUT 0x%02x, bulk IN 0x%02x", s_p.intf, s_p.alt, s_p.ep_out,
              s_p.ep_in);

@@ -183,7 +183,7 @@ port status 0x18 (selected, no error)
 
 ## Printer drivers (`printer_driver.h`, `components/printers/`)
 
-The add-a-driver workflow (cases, files to touch, tests, status table) is spelled out in `docs/adding-a-printer.md` for users and `.claude/skills/add-printer-driver/SKILL.md` for coding agents.
+The add-a-driver workflow (cases, files to touch, tests, status table) is spelled out in `docs/adding-a-printer.md` for users and `.claude/skills/add-printer-driver/SKILL.md` for coding agents. `ipp_usb.c` is the generic IPP-over-USB (USB protocol 4) passthrough — no ids of its own, `print_job.c` falls back to it when a plugged-in device shows a protocol-4 interface and no driver matched.
 
 
 - A driver is a `printer_driver_t`: id, make and model, IEEE 1284 MFG/MDL, USB VID:PID (0 when unknown), colour, whether the device has a pixma scanner, resolutions (the last is the default), papers (the first is the default), margins in 1/100 mm, `model` (the driver's own data); then the job (`job_begin(driver, io, dpi, paper)`, `page_begin(src_w, src_h, bytes_pp)`, `page_line(y, px)`, `page_end`, `job_end`, optional `job_stats`), an optional `test_page(driver, io, dpi, label)` and an optional `status(state, detail, data, st)` that maps the back channel's last status reply into IPP reasons, message and supplies.

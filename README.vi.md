@@ -38,6 +38,7 @@ Không cần máy tính, không cần server CUPS, không cần cài driver trê
 | Samsung / Dell SPL (QPDL v3) | Samsung ML-2160 / ML-2165 / ML-2168, Dell B1160w (USB) | 🟡 cùng ngôn ngữ in, chưa thử | – |
 | Canon PIXMA | MG2550S | 🟢 đã thử (bản gốc) | có |
 | Canon PIXMA | MG2400, MG2500, MG2900, MG3000, E460/E470, E3100, TS3100, MP230, MP250–MP288, MP490–MP499, MX340–MX428, iP2700, iP2800, P200 | 🟡 dự kiến chạy được (bản gốc) | đa số có |
+| **IPP-over-USB (không cần driver)** | mọi máy có giao thức USB 4 (nhiều HP / Epson / Brother đời mới) | 🟡 passthrough chung, chưa thử trên máy thật | – |
 
 - 🟢 đã kiểm chứng trên máy thật · 🟡 dự kiến chạy được, chưa thử trên máy thật — bạn đã thử? Một [issue](https://github.com/ngojclee/esp32-usb-to-airprint/issues) một dòng ("chạy" / "lỗi") sẽ nâng nó lên đã kiểm chứng
 

@@ -18,6 +18,8 @@ typedef struct {
     char serial[48];
     char device_id[384];        // IEEE 1284 Device ID, e.g. "MFG:Canon;CMD:...;MDL:MG2500 series;..."
     bool bidirectional;         // has a bulk IN endpoint
+    uint8_t protocol;           // bInterfaceProtocol of the chosen printer interface
+    bool ipp_usb;               // some printer-class interface speaks IPP-over-USB (protocol 4)
 } usb_printer_info_t;
 
 // Last status the printer reported on the back channel (IVEC GetStatusResponse)

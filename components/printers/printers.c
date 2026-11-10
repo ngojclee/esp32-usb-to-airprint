@@ -17,6 +17,10 @@ extern const printer_driver_t canon_mg2500_driver, canon_mg2400_driver, canon_p2
 // Samsung SPL3 (QPDL v3) mono lasers, e.g. the Dell B1160 (ML-216x).
 extern const printer_driver_t dell_b1160_driver;
 
+// IPP-over-USB (protocol 4) passthrough: no USB ids of its own, it is the
+// fallback when a device exposes that protocol and nothing else matches.
+extern const printer_driver_t ipp_usb_driver;
+
 const printer_driver_t *const printer_drivers[] = {
     &canon_mg2500_driver, &canon_mg2400_driver, &canon_p200_driver, &canon_mg2900_driver, &canon_mg3000_driver,
     &canon_e470_driver, &canon_e460_driver, &canon_ip2800_driver, &canon_e3100_driver, &canon_ts3100_driver,
@@ -24,6 +28,7 @@ const printer_driver_t *const printer_drivers[] = {
     &canon_mp490_driver, &canon_mp493_driver, &canon_mp495_driver, &canon_mx340_driver, &canon_mx350_driver,
     &canon_mx360_driver, &canon_mx410_driver, &canon_mx420_driver,
     &dell_b1160_driver,
+    &ipp_usb_driver,
     NULL,
 };
 

@@ -32,9 +32,14 @@ Where to find the ids: `lsusb` on Linux, Device Manager on Windows
 ## Case 2 — a printer that already speaks a standard language
 
 Many recent printers accept **PWG raster or URF** directly (they are
-driverless/IPP-Everywhere capable even on USB). For those, the driver can be a
-thin passthrough: no encoder, just send the raster with the right page header.
-This is the cheapest family to grow.
+driverless/IPP-Everywhere capable even on USB). Those are handled by the
+generic [`ipp_usb.c`](../components/printers/ipp_usb.c) driver: it wraps the
+job in the HTTP-over-bulk framing of IPP-over-USB (USB protocol 4) and
+re-encodes the pages as PWG raster. No per-model work is needed — the
+firmware picks it automatically when a device shows a protocol-4 interface
+and no other driver matches. The cheapest family to grow: if a printer needs
+a related standard (e.g. a fixed header or a different attribute set), start
+from that file.
 
 ## Case 3 — a new protocol family (new file)
 

@@ -38,6 +38,7 @@ Pas d'ordinateur, pas de serveur CUPS, pas de pilote à installer sur le télép
 | Samsung / Dell SPL (QPDL v3) | Samsung ML-2160 / ML-2165 / ML-2168, Dell B1160w (USB) | 🟡 même langage, pas encore testé | – |
 | Canon PIXMA | MG2550S | 🟢 testé (projet d'origine) | oui |
 | Canon PIXMA | MG2400, MG2500, MG2900, MG3000, E460/E470, E3100, TS3100, MP230, MP250–MP288, MP490–MP499, MX340–MX428, iP2700, iP2800, P200 | 🟡 devrait fonctionner (projet d'origine) | la plupart |
+| **IPP-over-USB (sans pilote)** | toute imprimante exposant le protocole USB 4 (beaucoup de HP / Epson / Brother récentes) | 🟡 passthrough générique, pas encore testé sur matériel réel | – |
 
 - 🟢 validé sur une vraie imprimante · 🟡 devrait fonctionner, pas encore testé sur matériel réel — vous en avez essayé une ? Un [ticket](https://github.com/ngojclee/esp32-usb-to-airprint/issues) d'une ligne (« marche » / « échoue ») la fait passer en validé
 

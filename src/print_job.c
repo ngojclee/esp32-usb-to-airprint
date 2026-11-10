@@ -45,6 +45,8 @@ bool print_job_set_printer(const usb_printer_info_t *info)
 {
     const printer_driver_t *before = print_job_driver();
     const printer_driver_t *d = printer_driver_match(info->vid, info->pid, info->device_id);
+    if (!d && info->ipp_usb)
+        d = printer_driver_find("ipp-usb");     // driverless USB printer (protocol 4)
     s_attached = d;
     if (d)
         ESP_LOGI(TAG, "printer %04x:%04x: driver %s (%s)", info->vid, info->pid, d->id, d->make_model);
