@@ -15,6 +15,12 @@ Pas d'ordinateur, pas de serveur CUPS, pas de pilote à installer sur le télép
 
 <img src="docs/images/board.jpg" width="320" alt="Carte ESP32-S3">
 
+### Guide Vidéo en 5 Étapes (1:28 · 1080p · Audio VI)
+
+[![Regarder le guide vidéo](docs/images/video-guide-poster.jpg)](https://github.com/ngojclee/esp32-usb-to-airprint/releases/download/v0.1.0/esp32-usb-to-airprint-guide-16x9.mp4)
+
+[Voir / Télécharger la vidéo 16:9 HD (`esp32-usb-to-airprint-guide-16x9.mp4`)](https://github.com/ngojclee/esp32-usb-to-airprint/releases/download/v0.1.0/esp32-usb-to-airprint-guide-16x9.mp4)
+
 </div>
 
 > [!NOTE]

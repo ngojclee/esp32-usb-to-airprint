@@ -15,6 +15,12 @@ Không cần máy tính, không cần server CUPS, không cần cài driver trê
 
 <img src="docs/images/board.jpg" width="320" alt="Board ESP32-S3">
 
+### Video Hướng Dẫn 5 Bước (1:28 · 1080p HD)
+
+[![Xem Video Hướng Dẫn 5 Bước](docs/images/video-guide-poster.jpg)](https://github.com/ngojclee/esp32-usb-to-airprint/releases/download/v0.1.0/esp32-usb-to-airprint-guide-16x9.mp4)
+
+[Xem / Tải Video Ngang 16:9 HD (`esp32-usb-to-airprint-guide-16x9.mp4`)](https://github.com/ngojclee/esp32-usb-to-airprint/releases/download/v0.1.0/esp32-usb-to-airprint-guide-16x9.mp4)
+
 </div>
 
 > [!NOTE]

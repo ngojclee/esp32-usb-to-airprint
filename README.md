@@ -17,6 +17,12 @@ No computer, no CUPS server, no drivers on your phone.
 
 <img src="docs/images/board.jpg" width="320" alt="ESP32-S3 board">
 
+### Video Guide (1:28 · 1080p · Vietnamese VO)
+
+[![Watch 5-Step Setup Video Guide](docs/images/video-guide-poster.jpg)](https://github.com/ngojclee/esp32-usb-to-airprint/releases/download/v0.1.0/esp32-usb-to-airprint-guide-16x9.mp4)
+
+[Watch / Download 16:9 HD MP4 (`esp32-usb-to-airprint-guide-16x9.mp4`)](https://github.com/ngojclee/esp32-usb-to-airprint/releases/download/v0.1.0/esp32-usb-to-airprint-guide-16x9.mp4)
+
 </div>
 
 > [!NOTE]
