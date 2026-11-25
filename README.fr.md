@@ -32,6 +32,7 @@ Pas d'ordinateur, pas de serveur CUPS, pas de pilote à installer sur le télép
 - **Numériser** (multifonctions Canon) depuis un navigateur, Capture d'image / Aperçu sur Mac, ou avec le bouton de la carte.
 - **Configuration depuis le téléphone.** Une carte neuve crée son propre WiFi `Printer-Setup-XXXX` ; connectez-vous et la page de configuration s'ouvre toute seule. Choisissez votre réseau dans la liste, c'est fini.
 - **Page de configuration web** (`http://<nom>.local/setup`) : WiFi, nom de l'imprimante, nom réseau, **DHCP ou IP fixe**, mot de passe de la page, réinitialisation d'usine.
+- **Mises à jour du firmware depuis la page de configuration :** *Check for updates* installe la dernière release GitHub par le WiFi, ou envoyez un fichier `…-esp32s3-ota.bin`. Nécessite un mot de passe de configuration. Un nouveau firmware qui ne revient pas sur le réseau est annulé automatiquement.
 - **Jamais enfermé dehors :** le WiFi de configuration revient tout seul si le réseau enregistré reste injoignable 2 minutes, et **maintenir BOOT 10 s** efface tous les réglages.
 - **Remplacement direct de CUPS :** la carte répond sur `/ipp/print` et sur les URL de style CUPS `/printers/<file>`, donc les postes configurés pour l'ancien serveur continuent d'imprimer quand la carte reprend son adresse IP.
 - **Une application web** sur téléphone ou ordinateur : imprimer des PDF et des images, numériser, garder les fichiers dans le navigateur, assembler des pages (rotation, recadrage, copie de carte d'identité) en PDF.

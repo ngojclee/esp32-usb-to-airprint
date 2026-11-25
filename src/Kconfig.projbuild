@@ -9,6 +9,14 @@ menu "Printer server"
             components/printers/printers.c. A recognised printer (USB id or
             IEEE 1284 model name) uses its own driver.
 
+    config FW_UPDATE_REPO
+        string "GitHub repository for firmware updates (owner/name)"
+        default "ngojclee/esp32-usb-to-airprint"
+        help
+            The settings page offers the latest release of this repository
+            (its *-esp32s3-ota.bin file) when it is newer than the running
+            firmware.
+
     choice PRINTER_RESOLUTION
         prompt "Test page resolution"
         default PRINTER_RES_600

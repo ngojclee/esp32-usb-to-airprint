@@ -12,6 +12,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_timer.h"
+#include "esp_app_desc.h"
+#include "fw_update.h"
 #include "settings.h"
 #include "wifi.h"
 
@@ -230,7 +232,7 @@ static void setup_get(airprint_http_t *h)
     wifi_net_t nets[15];
     int nnet = wifi_scan(nets, 15);
 
-    sb_t b = {malloc(12 * 1024), 0, 12 * 1024};
+    sb_t b = {malloc(20 * 1024), 0, 20 * 1024};
     sb_add(&b, "<!doctype html><title>Printer setup</title>%s<main><h1>Printer setup</h1>", CSS);
     char ip[16];
     if (wifi_get_ip(ip, sizeof(ip)))
@@ -317,6 +319,41 @@ static void setup_get(airprint_http_t *h)
         sb_add(&b, "<label for=admin>Current password (only to change it)</label>"
                    "<input type=password id=admin name=admin autocomplete=current-password>");
     sb_add(&b, "</fieldset><button type=submit>Save and restart</button></form>");
+
+    // Firmware: only with a settings password, so nobody else on the network
+    // can replace it. The page talks to /setup/firmware with fetch().
+    sb_add(&b, "<fieldset style='margin-top:28px'><legend>Firmware</legend>"
+               "<p><small>Running version %s.</small></p>",
+           esp_app_get_description()->version);
+    if (!s->admin[0]) {
+        sb_add(&b, "<p><small>Set a settings password above to enable firmware updates.</small></p></fieldset>");
+    } else {
+        sb_add(&b,
+               "<p><button type=button id=fwchk>Check for updates</button> "
+               "<button type=button id=fwins hidden>Install</button></p>"
+               "<label for=fwfile>Or upload a firmware file (<i>…-esp32s3-ota.bin</i> from a release)</label>"
+               "<input type=file id=fwfile accept='.bin'> <button type=button id=fwup>Upload</button>"
+               "<p id=fwmsg role=status></p><p><small>The printer restarts with the new firmware; if it does "
+               "not come back on the network, it returns to the current one by itself.</small></p></fieldset>"
+               "<script>(function(){var m=document.getElementById('fwmsg'),ins=document.getElementById('fwins'),"
+               "u='/setup/firmware',t;function say(x){m.textContent=x}"
+               "function back(){say('Restarting… this page reloads in 40 s.');setTimeout(function(){location.reload()},40000)}"
+               "function poll(){fetch(u).then(function(r){return r.json()}).then(function(s){clearTimeout(t);ins.hidden=true;"
+               "if(s.state=='checking'){say('Checking…');t=setTimeout(poll,1000)}"
+               "else if(s.state=='available'){say('Version '+s.latest+' is available.');ins.textContent='Install '+s.latest;ins.hidden=false}"
+               "else if(s.state=='current'){say('Up to date (latest release: '+s.latest+').')}"
+               "else if(s.state=='downloading'){say('Downloading and installing… '+s.progress+'%%');t=setTimeout(poll,1000)}"
+               "else if(s.state=='done'){back()}else if(s.state=='error'){say('Error: '+s.error)}})"
+               ".catch(function(){if(m.textContent.indexOf('Downloading')==0)back()})}"
+               "function post(op,body){return fetch(u+'?op='+op,{method:'POST',body:body}).then(function(r){"
+               "return r.text().then(function(x){if(!r.ok)throw x;return x})})}"
+               "document.getElementById('fwchk').onclick=function(){post('check').then(poll,function(e){say(e)})};"
+               "ins.onclick=function(){if(confirm('Install the new firmware and restart the printer?'))"
+               "post('install').then(poll,function(e){say(e)})};"
+               "document.getElementById('fwup').onclick=function(){var f=document.getElementById('fwfile').files[0];"
+               "if(!f){say('Choose a file first.');return}if(!confirm('Install '+f.name+' and restart the printer?'))return;"
+               "say('Uploading…');post('upload',f).then(back,function(e){say(e)})}})()</script>");
+    }
 
     sb_add(&b, "<form method=post action='/setup' style='margin-top:28px'><input type=hidden name=action value=reset>"
                "<p><small>Forget all settings and restart in setup mode (WiFi \"%s\"). Holding the BOOT "
@@ -469,6 +506,53 @@ static bool foreign_host(airprint_http_t *h)
     return true;
 }
 
+// /setup/firmware: GET = update status (JSON), POST ?op=check|install|upload
+// (upload: the raw image as the request body). Needs a settings password and
+// a logged-in session; the session cookie is SameSite=Strict.
+static int body_reader(void *ctx, void *buf, size_t max)
+{
+    return airprint_http_read_body(ctx, buf, max);
+}
+
+static void firmware_http(airprint_http_t *h, bool get, const char *path)
+{
+    static const char *const TEXT = "text/plain; charset=utf-8";
+    if (!settings_get()->admin[0] || !logged_in(h)) {
+        const char *m = "Log in with a settings password first.";
+        airprint_http_send(h, "403 Forbidden", TEXT, m, strlen(m));
+        return;
+    }
+    if (get) {
+        char json[384];
+        fw_update_status_json(json, sizeof(json));
+        airprint_http_send_ex(h, "200 OK", "application/json", "Cache-Control: no-store\r\n", json, strlen(json));
+        return;
+    }
+    const char *op = strstr(path, "op=");
+    op = op ? op + 3 : "";
+    const char *err = NULL;
+    if (!strncmp(op, "upload", 6)) {
+        err = fw_update_from_stream(body_reader, h);
+        if (!err) {
+            ESP_LOGW(TAG, "firmware uploaded from the settings page, restarting");
+            const char *m = "OK, restarting into the new firmware.";
+            airprint_http_send(h, "200 OK", TEXT, m, strlen(m));
+            restart_soon();
+            return;
+        }
+    } else if (!strncmp(op, "check", 5)) {
+        err = fw_update_check_start() ? NULL : "Busy: printing, or an update is already running.";
+    } else if (!strncmp(op, "install", 7)) {
+        err = fw_update_install_start() ? NULL : "Nothing to install: check for updates first (or busy printing).";
+    } else {
+        err = "Unknown operation.";
+    }
+    if (err)
+        airprint_http_send(h, "409 Conflict", TEXT, err, strlen(err));
+    else
+        airprint_http_send(h, "202 Accepted", TEXT, "OK", 2);
+}
+
 bool setup_web_http(airprint_http_t *h, const char *method, const char *path)
 {
     size_t pl = strcspn(path, "?#");
@@ -476,6 +560,10 @@ bool setup_web_http(airprint_http_t *h, const char *method, const char *path)
 
     if (wifi_setup_ap_active() && get && (foreign_host(h) || (pl == 1 && path[0] == '/'))) {
         airprint_http_send_ex(h, "302 Found", "text/html", "Location: http://" WIFI_SETUP_IP "/setup\r\n", "", 0);
+        return true;
+    }
+    if (pl == 15 && !strncmp(path, "/setup/firmware", 15)) {
+        firmware_http(h, get, path);
         return true;
     }
     if (pl != 6 || strncmp(path, "/setup", 6) != 0)

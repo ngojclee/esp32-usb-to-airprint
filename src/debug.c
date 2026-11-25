@@ -1,4 +1,5 @@
 #include "debug.h"
+#include "fw_update.h"
 
 #include <errno.h>
 #include <stdarg.h>
@@ -403,25 +404,6 @@ static int recv_exact(httpd_req_t *req, uint8_t *buf, size_t n)
     return 0;
 }
 
-// Checks the start of an uploaded image: ESP32-S3 app of this project.
-static const char *check_image(const uint8_t *p, size_t n)
-{
-    const size_t desc_ofs = sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t);
-    if (n < desc_ofs + sizeof(esp_app_desc_t))
-        return "image too small";
-    const esp_image_header_t *ih = (const esp_image_header_t *)p;
-    if (ih->magic != ESP_IMAGE_HEADER_MAGIC)
-        return "not an ESP firmware image (use firmware.bin, not the .elf)";
-    if (ih->chip_id != ESP_CHIP_ID_ESP32S3)
-        return "image is not for the ESP32-S3";
-    const esp_app_desc_t *d = (const esp_app_desc_t *)(p + desc_ofs);
-    if (d->magic_word != ESP_APP_DESC_MAGIC_WORD)
-        return "image has no app description";
-    if (strncmp(d->project_name, esp_app_get_description()->project_name, sizeof(d->project_name)) != 0)
-        return "image is from another project";
-    return NULL;
-}
-
 static esp_err_t ota_post(httpd_req_t *req)
 {
     if (s_busy && s_busy())
@@ -449,7 +431,7 @@ static esp_err_t ota_post(httpd_req_t *req)
             break;
         }
         if (done == 0) {
-            err = check_image(buf, n);
+            err = fw_update_check_image(buf, n);
             if (!err && esp_ota_begin(part, OTA_WITH_SEQUENTIAL_WRITES, &h) != ESP_OK)
                 err = "cannot start the update";
             if (err)

@@ -32,6 +32,7 @@ Không cần máy tính, không cần server CUPS, không cần cài driver trê
 - **Scan** (máy Canon đa năng) từ trình duyệt, từ Image Capture / Preview trên Mac, hoặc bằng nút trên board.
 - **Cài đặt ngay từ điện thoại.** Board mới tự phát WiFi `Printer-Setup-XXXX`; kết nối vào là trang cài đặt tự mở. Chọn WiFi trong danh sách là xong.
 - **Trang cài đặt web** (`http://<tên>.local/setup`): WiFi, tên máy in, tên mạng, **DHCP hoặc IP tĩnh**, mật khẩu trang cài đặt, khôi phục cài đặt gốc.
+- **Cập nhật firmware ngay trên trang cài đặt:** bấm *Check for updates* để tải và cài bản release mới nhất từ GitHub qua WiFi, hoặc tải lên file `…-esp32s3-ota.bin`. Cần đặt mật khẩu cài đặt trước. Bản mới không vào lại được mạng thì board tự quay về bản cũ.
 - **Không bao giờ bị khoá ngoài:** WiFi cài đặt tự bật lại nếu WiFi đã lưu mất quá 2 phút, và **giữ nút BOOT 10 giây** sẽ xoá toàn bộ cài đặt.
 - **Thay thế CUPS tại chỗ:** board trả lời ở `/ipp/print` và cả đường dẫn kiểu CUPS `/printers/<hàng in>`, nên máy khách đã cài sẵn với server cũ vẫn in được khi board nhận IP của server đó.
 - **Web app** trên điện thoại/máy tính: in PDF và ảnh, scan, lưu file trong trình duyệt, ghép trang (xoay, cắt, sao chụp CCCD) thành PDF.

@@ -24,6 +24,8 @@ jobs:
       - name: Build firmware (blank .env → no WiFi credentials in the image)
         run: |
           rm -f .env
+          # the version the settings page compares with the latest release
+          case "$GITHUB_REF_NAME" in v*) export FW_VERSION="${GITHUB_REF_NAME#v}";; esac
           pio run -e esp32s3
 
       - name: Make sure no credentials leaked into the image
@@ -45,6 +47,8 @@ jobs:
             0x8000  $B/partitions.bin \
             0xf000  $B/ota_data_initial.bin \
             0x20000 $B/firmware.bin
+          # the app image alone: what the settings page installs over WiFi
+          cp $B/firmware.bin dist/esp32-usb-to-airprint-$VER-esp32s3-ota.bin
           (cd dist && sha256sum *.bin > SHA256SUMS.txt && cat SHA256SUMS.txt)
 
       - name: Upload to the release

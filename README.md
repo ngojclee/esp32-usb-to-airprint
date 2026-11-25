@@ -34,6 +34,7 @@ No computer, no CUPS server, no drivers on your phone.
 - **Scan** (Canon all-in-ones) from any browser, from Image Capture / Preview on a Mac, or with the button on the board.
 - **Setup from your phone.** A fresh board starts its own WiFi `Printer-Setup-XXXX`; join it and the setup page opens by itself. Pick your network from the list, done.
 - **Web setup page** (`http://<name>.local/setup`): WiFi, printer name, network name, **DHCP or fixed IP**, settings password, factory reset.
+- **Firmware updates from the setup page:** *Check for updates* installs the latest GitHub release over WiFi, or upload a `…-esp32s3-ota.bin` file. Needs a settings password. A new firmware that doesn't get back on the network is rolled back automatically.
 - **Never locked out:** the setup WiFi comes back on its own if the saved network is out of reach for 2 minutes, and holding **BOOT for 10 s** erases all settings.
 - **Drop-in CUPS replacement:** answers on `/ipp/print` and on CUPS-style `/printers/<queue>` URLs, so clients set up against an old print server keep working once the board takes its IP.
 - **A web app** on your phone or computer: print PDFs and pictures, scan, keep the files in the browser, and put pages together (rotate, crop, ID card copies) into a PDF.

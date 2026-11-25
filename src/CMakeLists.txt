@@ -1,5 +1,6 @@
-idf_component_register(SRCS "main.c" "status_led.c" "usb_printer.c" "print_job.c" "wifi.c" "settings.c" "setup_web.c" "airprint_esp.c" "debug.c" "oled.c" "qemu_selftest.c"
+idf_component_register(SRCS "main.c" "status_led.c" "usb_printer.c" "print_job.c" "wifi.c" "settings.c" "setup_web.c" "fw_update.c" "airprint_esp.c" "debug.c" "oled.c" "qemu_selftest.c"
                        INCLUDE_DIRS "."
                        REQUIRES usb canon_bjl airprint printers scanner webui oled esp_driver_rmt esp_driver_gpio esp_driver_i2c esp_timer esp_wifi
                                 esp_netif esp_eth nvs_flash mdns
-                                esp_http_server app_update espcoredump esp_partition)
+                                esp_http_server app_update espcoredump esp_partition
+                                esp_http_client esp_https_ota json mbedtls)

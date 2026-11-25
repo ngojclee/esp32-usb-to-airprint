@@ -59,6 +59,10 @@ web/                    the web UI: Svelte 5 + TypeScript + Vite (see Web UI)
   tests/                node unit tests (*.test.ts), e2e.mjs (headless Chrome)
 src/                    firmware (ESP-IDF via PlatformIO)
   main.c                button, LED, screen, startup, OTA confirmation task
+  fw_update.c           firmware updates from /setup (every MODE): upload an app image, or
+                        install the latest GitHub release (CONFIG_FW_UPDATE_REPO, asset
+                        *-esp32s3-ota.bin, compared with PROJECT_VER = FW_VERSION from the tag);
+                        only with a settings password; same rollback confirmation as OTA
   usb_printer.c         USB host driver: printer class (bulk OUT + IVEC back
                         channel) and the scanner interface (synchronous bulk I/O)
   airprint_esp.c        glue: printer and scanner hooks, status mapping, mDNS
