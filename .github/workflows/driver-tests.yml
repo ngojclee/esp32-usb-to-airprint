@@ -27,9 +27,9 @@ jobs:
       - name: Build the host selftests
         run: |
           INC="-I components/airprint/include -I components/airprint"
-          cc -std=c11 -O2 -Wall $INC host/driver_selftest.c components/printers/printers.c \
+          cc -std=gnu11 -O2 -Wall $INC host/driver_selftest.c components/printers/printers.c \
              components/printers/pcl.c components/printers/thermal.c -o driver_selftest
-          cc -std=c11 -O2 -Wall $INC host/ipp_usb_selftest.c components/printers/ipp_usb.c -o ipp_usb_selftest
+          cc -std=gnu11 -O2 -Wall $INC host/ipp_usb_selftest.c components/printers/ipp_usb.c -o ipp_usb_selftest
 
       - name: IEEE 1284 command-set matching
         run: ./driver_selftest cmd
