@@ -9,8 +9,9 @@
 //             ESC *b#Y, ESC *rC, form feed
 //   PJL: ESC E, UEL, EOJ, UEL
 //
-// The logical page starts 1/4 inch from the left paper edge (PCL's default
-// for portrait), so that much of the source raster is skipped on the left.
+// The portrait logical page starts 1/4 inch from the left paper edge on inch
+// papers and 71/300 inch on metric ones (A4: 142 dots at 600 dpi, as GhostPCL
+// renders it), so that much of the source raster is skipped on the left.
 // No USB ids: chosen for a printer whose IEEE 1284 command set lists PCL
 // and that no model driver matched (printers.c). CI renders the stream with
 // GhostPCL (tools/pcl_check.py); not tried on a printer yet.
@@ -25,6 +26,7 @@
 
 typedef struct {
     int code;                   // ESC &l#A page size
+    bool metric;                // logical page 71/300 in from the left (A4 & co), else 1/4 in
 } pcl_size_t;
 
 static const printer_paper_t PAPERS[] = {
@@ -41,7 +43,8 @@ static const printer_paper_t PAPERS[] = {
     {"Envelope C5", "iso_c5_162x229mm", 16200, 22900},
     {"Envelope Monarch", "na_monarch_3.875x7.5in", 9843, 19050},
 };
-static const pcl_size_t SIZES[] = {{26}, {2}, {3}, {25}, {24}, {1}, {45}, {100}, {81}, {90}, {91}, {80}};
+static const pcl_size_t SIZES[] = {{26, true}, {2, false}, {3, false}, {25, true},   {24, true},  {1, false},
+                                   {45, true}, {100, true}, {81, false}, {90, true}, {91, true}, {80, false}};
 _Static_assert(sizeof(PAPERS) / sizeof(PAPERS[0]) == sizeof(SIZES) / sizeof(SIZES[0]), "one code per paper");
 
 typedef struct {
@@ -110,7 +113,7 @@ static void *job_begin(const printer_driver_t *d, const printer_io_t *io, int dp
     j->io = io;
     j->dpi = dpi;
     j->size_code = SIZES[paper].code;
-    j->x0 = dpi / 4;
+    j->x0 = SIZES[paper].metric ? dpi * 71 / 300 : dpi / 4;
     char pjl[160];
     int n = snprintf(pjl, sizeof(pjl),
                      "\x1b%%-12345X@PJL JOB NAME=\"print\"\r\n@PJL SET RESOLUTION=%d\r\n"

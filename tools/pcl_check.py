@@ -21,7 +21,10 @@ if gpcl6:
 path = args[0]
 data = open(path, "rb").read()
 
-SIZES = {26: (8.27, 11.69), 2: (8.5, 11), 3: (8.5, 14), 25: (5.83, 8.27), 24: (4.13, 5.83), 1: (7.25, 10.5)}
+# code: (width in, height in, metric) -- the logical page starts 71/300 in
+# from the left on metric papers, 1/4 in on the others
+SIZES = {26: (8.27, 11.69, True), 2: (8.5, 11, False), 3: (8.5, 14, False), 25: (5.83, 8.27, True),
+         24: (4.13, 5.83, True), 1: (7.25, 10.5, False)}
 
 
 def fail(msg):
@@ -97,15 +100,15 @@ if not pages:
 from PIL import Image
 
 pg = pages[0]
-pw, ph = SIZES[pg["size"]]
+pw, ph, metric = SIZES[pg["size"]]
 W, H = round(pw * pg["res"]), round(ph * pg["res"])
-x0 = pg["res"] // 4
+x0 = pg["res"] * 71 // 300 if metric else pg["res"] // 4
 wb = (pg["width"] + 7) // 8
 img = Image.new("1", (W, H), 1)
 raster = b"".join(r[:wb].ljust(wb, b"\0") for r in pg["rows"])
 r_img = Image.frombytes("1", (wb * 8, len(pg["rows"])), raster).point(lambda v: 255 - v)
 img.paste(r_img.crop((0, 0, pg["width"], len(pg["rows"]))), (x0, 0))
-ink = sum(1 for v in img.getdata() if v == 0)
+ink = img.convert("L").histogram()[0]
 print("%d page(s); page 1: size code %d, %d dpi, raster %d x %d, %.2f%% black"
       % (len(pages), pg["size"], pg["res"], pg["width"], len(pg["rows"]), 100.0 * ink / (W * H)))
 if not ink:
@@ -123,12 +126,13 @@ if gpcl6:
         print("GhostPCL page: %d x %d" % g.size)
         if abs(g.size[0] - W) > 2 or abs(g.size[1] - H) > 2:
             fail("GhostPCL page size %s, expected %dx%d" % (g.size, W, H))
-        g = g.crop((0, 0, W, H))
-        a, b = img.tobytes(), g.tobytes()
+        # the last few columns of GhostPCL's bitmap are past the page edge
+        box = (0, 0, W - 12, H)
+        a, b = img.crop(box).tobytes(), g.crop(box).tobytes()
         diff = sum(bin(x ^ y).count("1") for x, y in zip(a, b))
         pct = 100.0 * diff / (W * H)
         print("GhostPCL vs decoder: %.3f%% of pixels differ" % pct)
-        if pct > 0.5:
+        if pct > 0.01:
             g.save(args[1].replace(".png", "-gpcl6.png") if args[1:] else "gpcl6.png")
             fail("GhostPCL renders the stream differently")
 print("OK")
