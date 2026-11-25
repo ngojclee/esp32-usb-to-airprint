@@ -23,7 +23,7 @@ wrong driver only prints garbage or nothing on its own models.
 | IPP-over-USB (driverless) | `ipp_usb.c` | any USB protocol-4 printer | 🟡 | a report from any HP / Epson / Brother owner |
 | ESC/POS raster (receipt printers) | `thermal.c` | 58 / 80 mm thermal receipt printers | 🟡 | a report; check against a vendor capture |
 | TSPL (label printers) | `thermal.c` | Xprinter, TSC, many 4" label printers | 🟡 | capture from the Xprinter Windows driver; real print |
-| PCL raster (lasers) | `pcl.c` | HP LaserJet and most PCL lasers (Brother, Kyocera, Ricoh…) | 🟡 → 🔵 | GhostPCL rendering in CI |
+| PCL raster (lasers) | `pcl.c` | HP LaserJet and most PCL lasers (Brother, Kyocera, Ricoh…) | 🔵 A4 test page identical to GhostPCL's rendering | a report from any PCL laser owner; also render a Letter page in CI |
 | ESC/P-R (Epson inkjets) | — | Epson inkjets | planned | after PCL |
 
 ## How each family is tested without the printer

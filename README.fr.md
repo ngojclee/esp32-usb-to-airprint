@@ -46,10 +46,13 @@ Pas d'ordinateur, pas de serveur CUPS, pas de pilote à installer sur le télép
 | Canon PIXMA | MG2550S | 🟢 testé (projet d'origine) | oui |
 | Canon PIXMA | MG2400, MG2500, MG2900, MG3000, E460/E470, E3100, TS3100, MP230, MP250–MP288, MP490–MP499, MX340–MX428, iP2700, iP2800, P200 | 🟡 devrait fonctionner (projet d'origine) | la plupart |
 | **IPP-over-USB (sans pilote)** | toute imprimante exposant le protocole USB 4 (beaucoup de HP / Epson / Brother récentes) | 🟡 passthrough générique, pas encore testé sur matériel réel | – |
+| **Laser PCL (générique)** | lasers annonçant PCL 5 / PCL 6 dans leur identifiant 1284 : HP LaserJet, Brother HL, Kyocera, Ricoh, Lexmark… (noir et blanc, 300/600 dpi) | 🔵 rendu identique au pixel près par GhostPCL en CI ; pas encore imprimé | – |
+| **Tickets ESC/POS (générique)** | imprimantes thermiques de tickets 58 / 80 mm (203 dpi, coupe après chaque page) | 🟡 vérifié par notre décodeur seulement | – |
+| **Étiquettes TSPL (générique)** | TSC, Xprinter et autres imprimantes d'étiquettes TSPL, 9 formats jusqu'à 4×6 po (203 dpi) | 🟡 vérifié par notre décodeur seulement | – |
 
-- 🟢 validé sur une vraie imprimante · 🟡 devrait fonctionner, pas encore testé sur matériel réel — vous en avez essayé une ? Un [ticket](https://github.com/ngojclee/esp32-usb-to-airprint/issues) d'une ligne (« marche » / « échoue ») la fait passer en validé
+- 🟢 imprime correctement sur la vraie imprimante · 🔵 le flux est rendu par un programme indépendant (p. ex. GhostPCL) exactement comme prévu · 🟡 compilé et vérifié par notre propre décodeur seulement — vous en avez essayé une ? Un [rapport de test](https://github.com/ngojclee/esp32-usb-to-airprint/issues/new?template=printer-test-report.md) (« marche » / « échoue ») la fait passer en 🟢. Comment chaque famille est testée et la suite : [docs/driver-roadmap.md](docs/driver-roadmap.md) (en anglais).
 
-Le firmware reconnaît l'imprimante quand on la branche (identifiants USB, puis modèle IEEE 1284). Une autre laser SPL (`MODE:SPL3` dans son identifiant 1284) ? Il suffit probablement d'ajouter ses identifiants USB dans [`samsung_qpdl.c`](components/printers/samsung_qpdl.c) — ouvrez un ticket avec une page de test.
+Le firmware reconnaît l'imprimante quand on la branche (identifiants USB, puis modèle IEEE 1284 ; pour un modèle inconnu, les langages annoncés dans l'identifiant 1284 choisissent un pilote générique). Une autre laser SPL (`MODE:SPL3` dans son identifiant 1284) ? Il suffit probablement d'ajouter ses identifiants USB dans [`samsung_qpdl.c`](components/printers/samsung_qpdl.c) — ouvrez un ticket avec une page de test.
 
 ### Le pilote Dell B1160 / SPL en bref
 

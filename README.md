@@ -48,10 +48,13 @@ No computer, no CUPS server, no drivers on your phone.
 | Canon PIXMA | MG2550S | 🟢 tested (upstream) | yes |
 | Canon PIXMA | MG2400, MG2500, MG2900, MG3000, E460/E470, E3100, TS3100, MP230, MP250–MP288, MP490–MP499, MX340–MX428, iP2700, iP2800, P200 | 🟡 expected to work (upstream) | most |
 | **IPP-over-USB (driverless)** | any printer exposing USB protocol 4 (many recent HP / Epson / Brother) | 🟡 generic passthrough, not tested on real hardware yet | – |
+| **PCL laser (generic)** | lasers that list PCL 5 / PCL 6 in their 1284 id: HP LaserJet, Brother HL, Kyocera, Ricoh, Lexmark… (mono, 300/600 dpi) | 🔵 rendered pixel-identical by GhostPCL in CI; not printed yet | – |
+| **ESC/POS receipt (generic)** | 58 / 80 mm thermal receipt printers (203 dpi, cut after each page) | 🟡 checked by our decoder only | – |
+| **TSPL label (generic)** | TSC, Xprinter and other TSPL label printers, 9 label sizes up to 4×6 in (203 dpi) | 🟡 checked by our decoder only | – |
 
-- 🟢 validated on a real printer · 🟡 expected to work, not tested on real hardware yet — tried one? A one-line [issue](https://github.com/ngojclee/esp32-usb-to-airprint/issues) ("works" / "fails") upgrades it to verified
+- 🟢 printed correctly on the real printer · 🔵 the stream is rendered by an independent program (e.g. GhostPCL) exactly as intended · 🟡 built and checked by our own decoder only — tried one? A [printer test report](https://github.com/ngojclee/esp32-usb-to-airprint/issues/new?template=printer-test-report.md) ("works" / "fails") moves it to 🟢. How each family is tested and what comes next: [docs/driver-roadmap.md](docs/driver-roadmap.md).
 
-The firmware recognises the printer when it is plugged in (USB ids, then the IEEE 1284 model). Got another SPL laser (`MODE:SPL3` in its 1284 ID)? It probably needs only its USB ids in [`samsung_qpdl.c`](components/printers/samsung_qpdl.c) — please open an issue with a test print.
+The firmware recognises the printer when it is plugged in (USB ids, then the IEEE 1284 model; for a model it doesn't know, the printer languages in its 1284 id pick a generic driver). Got another SPL laser (`MODE:SPL3` in its 1284 ID)? It probably needs only its USB ids in [`samsung_qpdl.c`](components/printers/samsung_qpdl.c) — please open an issue with a test print.
 
 ### Dell B1160 / SPL driver at a glance
 

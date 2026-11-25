@@ -46,10 +46,13 @@ Không cần máy tính, không cần server CUPS, không cần cài driver trê
 | Canon PIXMA | MG2550S | 🟢 đã thử (bản gốc) | có |
 | Canon PIXMA | MG2400, MG2500, MG2900, MG3000, E460/E470, E3100, TS3100, MP230, MP250–MP288, MP490–MP499, MX340–MX428, iP2700, iP2800, P200 | 🟡 dự kiến chạy được (bản gốc) | đa số có |
 | **IPP-over-USB (không cần driver)** | mọi máy có giao thức USB 4 (nhiều HP / Epson / Brother đời mới) | 🟡 passthrough chung, chưa thử trên máy thật | – |
+| **Laser PCL (chung)** | máy laser có PCL 5 / PCL 6 trong ID 1284: HP LaserJet, Brother HL, Kyocera, Ricoh, Lexmark… (đen trắng, 300/600 dpi) | 🔵 GhostPCL dựng lại giống từng điểm ảnh trong CI; chưa in thật | – |
+| **Máy in bill ESC/POS (chung)** | máy in nhiệt khổ 58 / 80 mm (203 dpi, cắt giấy sau mỗi trang) | 🟡 mới kiểm bằng bộ giải mã của dự án | – |
+| **Máy in tem TSPL (chung)** | TSC, Xprinter và các máy in tem TSPL, 9 cỡ tem tới 4×6 inch (203 dpi) | 🟡 mới kiểm bằng bộ giải mã của dự án | – |
 
-- 🟢 đã kiểm chứng trên máy thật · 🟡 dự kiến chạy được, chưa thử trên máy thật — bạn đã thử? Một [issue](https://github.com/ngojclee/esp32-usb-to-airprint/issues) một dòng ("chạy" / "lỗi") sẽ nâng nó lên đã kiểm chứng
+- 🟢 đã in đúng trên máy thật · 🔵 luồng lệnh được một chương trình độc lập (vd GhostPCL) dựng lại đúng như ý · 🟡 build xong, mới kiểm bằng bộ giải mã của dự án — bạn đã thử? Gửi một [báo cáo test máy in](https://github.com/ngojclee/esp32-usb-to-airprint/issues/new?template=printer-test-report.md) ("chạy" / "lỗi") để nâng lên 🟢. Cách test từng dòng máy và kế hoạch tiếp theo: [docs/driver-roadmap.md](docs/driver-roadmap.md) (tiếng Anh).
 
-Firmware tự nhận máy in khi cắm vào (mã USB, rồi model theo IEEE 1284). Máy laser SPL khác (`MODE:SPL3` trong ID 1284)? Rất có thể chỉ cần thêm mã USB vào [`samsung_qpdl.c`](components/printers/samsung_qpdl.c) — hãy mở issue kèm trang in thử.
+Firmware tự nhận máy in khi cắm vào (mã USB, rồi model theo IEEE 1284; với model chưa biết, ngôn ngữ in khai trong ID 1284 sẽ chọn driver chung). Máy laser SPL khác (`MODE:SPL3` trong ID 1284)? Rất có thể chỉ cần thêm mã USB vào [`samsung_qpdl.c`](components/printers/samsung_qpdl.c) — hãy mở issue kèm trang in thử.
 
 ### Driver Dell B1160 / SPL
 
