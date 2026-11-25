@@ -59,7 +59,8 @@ jobs:
           tar xf gpdl.tar.gz
           cd ghostpdl-$V
           ./configure --without-x --disable-cups --disable-gtk >/dev/null
-          make -j"$(nproc)" pcl >/dev/null
+          make -j"$(nproc)" gpcl6 > build.log 2>&1 || { tail -40 build.log; exit 1; }
+          ls bin
           mkdir -p ~/gpcl6 && cp bin/gpcl6 ~/gpcl6/
 
       - name: PCL stream, checked against GhostPCL
