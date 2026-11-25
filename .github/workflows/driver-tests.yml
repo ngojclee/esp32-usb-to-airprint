@@ -1,0 +1,75 @@
+name: Driver tests
+
+# Every push and pull request: the generic drivers' streams are decoded and
+# checked, and the PCL stream is rendered by GhostPCL (an independent PCL
+# interpreter) and compared with our decoder. No hardware involved.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GHOSTPDL: "10.08.0"
+
+jobs:
+  drivers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Python packages
+        run: pip install pillow
+
+      - name: Build the host selftests
+        run: |
+          INC="-I components/airprint/include -I components/airprint"
+          cc -std=c11 -O2 -Wall $INC host/driver_selftest.c components/printers/printers.c \
+             components/printers/pcl.c components/printers/thermal.c -o driver_selftest
+          cc -std=c11 -O2 -Wall $INC host/ipp_usb_selftest.c components/printers/ipp_usb.c -o ipp_usb_selftest
+
+      - name: IEEE 1284 command-set matching
+        run: ./driver_selftest cmd
+
+      - name: ESC/POS and TSPL streams
+        run: |
+          mkdir -p out
+          ./driver_selftest escpos out/escpos.prn && python tools/thermal_check.py out/escpos.prn out/escpos.png
+          ./driver_selftest tspl out/tspl.prn && python tools/thermal_check.py out/tspl.prn out/tspl.png
+
+      - name: IPP-over-USB stream
+        run: ./ipp_usb_selftest out/ipp_usb.prn && python tools/ipp_usb_check.py out/ipp_usb.prn
+
+      - name: Cache GhostPCL
+        id: gpcl
+        uses: actions/cache@v4
+        with:
+          path: ~/gpcl6
+          key: gpcl6-${{ env.GHOSTPDL }}
+
+      - name: Build GhostPCL (first run only)
+        if: steps.gpcl.outputs.cache-hit != 'true'
+        run: |
+          V=${GHOSTPDL}
+          TAG=gs${V//./}
+          curl -sSLf -o gpdl.tar.gz https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/$TAG/ghostpdl-$V.tar.gz
+          tar xf gpdl.tar.gz
+          cd ghostpdl-$V
+          ./configure --without-x --disable-cups --disable-gtk >/dev/null
+          make -j"$(nproc)" pcl >/dev/null
+          mkdir -p ~/gpcl6 && cp bin/gpcl6 ~/gpcl6/
+
+      - name: PCL stream, checked against GhostPCL
+        run: |
+          ./driver_selftest pcl out/pcl.prn
+          python tools/pcl_check.py out/pcl.prn out/pcl.png --gpcl6 ~/gpcl6/gpcl6
+
+      - name: Keep the decoded pages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: driver-pages
+          path: out/*.png

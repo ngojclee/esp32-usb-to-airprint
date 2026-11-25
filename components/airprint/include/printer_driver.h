@@ -85,6 +85,9 @@ const printer_driver_t *printer_driver_find(const char *id);
 // (from its Device ID, "MFG:Canon;...;MDL:MG2500 series;"; case and a
 // " series" suffix ignored). NULL if none.
 const printer_driver_t *printer_driver_match(uint16_t vid, uint16_t pid, const char *device_id);
+// A generic driver for the printer language in the Device ID's CMD field
+// (TSPL, ESC/POS, PCL 5/6), NULL if none: for a model no driver knows.
+const printer_driver_t *printer_driver_for_cmd(const char *device_id);
 // Every driver, NULL-terminated.
 extern const printer_driver_t *const printer_drivers[];
 

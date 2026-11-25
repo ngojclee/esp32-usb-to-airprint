@@ -21,6 +21,10 @@ extern const printer_driver_t dell_b1160_driver;
 // fallback when a device exposes that protocol and nothing else matches.
 extern const printer_driver_t ipp_usb_driver;
 
+// Generic drivers per printer language, chosen from the command set (CMD) of
+// the IEEE 1284 id when nothing more specific matched (printer_driver_for_cmd).
+extern const printer_driver_t pcl_driver, escpos_driver, tspl_driver;
+
 const printer_driver_t *const printer_drivers[] = {
     &canon_mg2500_driver, &canon_mg2400_driver, &canon_p200_driver, &canon_mg2900_driver, &canon_mg3000_driver,
     &canon_e470_driver, &canon_e460_driver, &canon_ip2800_driver, &canon_e3100_driver, &canon_ts3100_driver,
@@ -29,6 +33,9 @@ const printer_driver_t *const printer_drivers[] = {
     &canon_mx360_driver, &canon_mx410_driver, &canon_mx420_driver,
     &dell_b1160_driver,
     &ipp_usb_driver,
+    &pcl_driver,
+    &escpos_driver,
+    &tspl_driver,
     NULL,
 };
 
@@ -83,5 +90,47 @@ const printer_driver_t *printer_driver_match(uint16_t vid, uint16_t pid, const c
         if (d->usb_mdl && same_model(d->usb_mdl, mdl) && (!mfg[0] || !d->usb_mfg || !strcasecmp(d->usb_mfg, mfg)))
             return d;
     }
+    return NULL;
+}
+
+// true if the comma-separated list has an entry starting with prefix (case
+// ignored, spaces skipped): "PJL,PCL 5e,PCLXL" has "PCL5"
+static bool cmd_has(const char *list, const char *prefix)
+{
+    for (const char *p = list; *p;) {
+        const char *q = prefix;
+        while (*p && *p != ',' && *q) {
+            if (*p == ' ') {
+                p++;
+                continue;
+            }
+            if (tolower((unsigned char)*p) != tolower((unsigned char)*q))
+                break;
+            p++;
+            q++;
+        }
+        if (!*q)
+            return true;
+        while (*p && *p != ',')
+            p++;
+        if (*p == ',')
+            p++;
+    }
+    return false;
+}
+
+const printer_driver_t *printer_driver_for_cmd(const char *device_id)
+{
+    char cmd[160];
+    device_id_field(device_id, "CMD", "COMMAND SET", cmd, sizeof(cmd));
+    if (!cmd[0])
+        return NULL;
+    if (cmd_has(cmd, "TSPL"))
+        return &tspl_driver;
+    if (cmd_has(cmd, "ESC/POS") || cmd_has(cmd, "ESCPOS"))
+        return &escpos_driver;
+    // lasers: "PCL", "PCL5", "PCL 5e", "PCL6"; not the inkjets' PCL3GUI
+    if (!cmd_has(cmd, "PCL3") && (cmd_has(cmd, "PCL5") || cmd_has(cmd, "PCL6") || cmd_has(cmd, "PCLXL")))
+        return &pcl_driver;
     return NULL;
 }
